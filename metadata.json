@@ -1,0 +1,7 @@
+{
+  "name": "SmartPantry",
+  "description": "A smart food inventory assistant that decodes barcodes to provide storage tips, expiration estimates, and AI-powered recipe suggestions.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
