@@ -97,4 +97,58 @@ export const generateStorageImage = async (productName: string, storageTip: stri
         console.error("Image Gen Error:", error);
         return null;
     }
-}
+};
+
+export const generateVeoVideo = async (
+  imageBase64: string, 
+  prompt: string, 
+  aspectRatio: '16:9' | '9:16'
+): Promise<string | null> => {
+  const ai = getClient();
+  if (!ai) throw new Error("API Key missing");
+
+  // Extract pure base64 and mimeType
+  // Expect format: data:image/png;base64,.....
+  const match = imageBase64.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+  if (!match) {
+    throw new Error("Invalid image data format. Please use a valid image file.");
+  }
+  const mimeType = match[1];
+  const imageBytes = match[2];
+
+  try {
+    let operation = await ai.models.generateVideos({
+      model: 'veo-3.1-fast-generate-preview',
+      prompt: prompt || "Cinematic video of this food",
+      image: {
+        imageBytes: imageBytes,
+        mimeType: mimeType,
+      },
+      config: {
+        numberOfVideos: 1,
+        resolution: '720p', 
+        aspectRatio: aspectRatio
+      }
+    });
+
+    // Poll for completion
+    while (!operation.done) {
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      operation = await ai.operations.getVideosOperation({operation: operation});
+    }
+
+    if (operation.error) {
+      throw new Error(operation.error.message || "Video generation failed");
+    }
+
+    const videoUri = operation.response?.generatedVideos?.[0]?.video?.uri;
+    if (!videoUri) throw new Error("No video URI returned from model");
+
+    // Append API Key for access
+    return `${videoUri}&key=${process.env.API_KEY}`;
+
+  } catch (error) {
+    console.error("Veo Generation Error:", error);
+    throw error;
+  }
+};

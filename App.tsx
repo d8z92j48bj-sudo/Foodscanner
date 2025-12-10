@@ -6,7 +6,8 @@ import SearchBar from './components/SearchBar';
 import ProductCard from './components/ProductCard';
 import SavedRecipesModal from './components/SavedRecipesModal';
 import RecipeBuilderModal from './components/RecipeBuilderModal';
-import { Leaf, AlertCircle, BookOpen, Calculator, PenLine } from 'lucide-react';
+import VeoModal from './components/VeoModal';
+import { Leaf, AlertCircle, BookOpen, Calculator, PenLine, Clapperboard } from 'lucide-react';
 
 const App: React.FC = () => {
   const [product, setProduct] = useState<ProductData | null>(null);
@@ -22,6 +23,9 @@ const App: React.FC = () => {
   // Recipe Builder State
   const [builderIngredients, setBuilderIngredients] = useState<RecipeIngredient[]>([]);
   const [showBuilderModal, setShowBuilderModal] = useState(false);
+
+  // Veo Modal State
+  const [showVeoModal, setShowVeoModal] = useState(false);
 
   // Load from LocalStorage on mount
   useEffect(() => {
@@ -149,6 +153,14 @@ const App: React.FC = () => {
       {/* Top Bar Actions */}
       <div className="absolute top-4 right-4 sm:top-8 sm:right-8 flex flex-wrap gap-3 justify-end">
         <button 
+            onClick={() => setShowVeoModal(true)}
+            className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 text-slate-600 hover:text-violet-600 hover:border-violet-200 transition-all font-medium text-sm"
+        >
+            <Clapperboard className="w-4 h-4" />
+            <span className="hidden sm:inline">Veo Studio</span>
+        </button>
+
+        <button 
             onClick={() => setShowBuilderModal(true)}
             className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 transition-all font-medium text-sm"
         >
@@ -263,6 +275,13 @@ const App: React.FC = () => {
             onAddManualIngredient={addManualIngredient}
             onSaveRecipe={saveCustomRecipe}
             onClose={() => setShowBuilderModal(false)}
+        />
+      )}
+
+      {/* Veo Studio Modal */}
+      {showVeoModal && (
+        <VeoModal 
+            onClose={() => setShowVeoModal(false)}
         />
       )}
     </div>
