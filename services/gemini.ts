@@ -1,18 +1,21 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ProductData, GeminiEnhancement } from "../types";
 
+const getClient = () => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) return null;
+    return new GoogleGenAI({ apiKey });
+}
+
 export const enhanceProductInfo = async (product: ProductData): Promise<GeminiEnhancement> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    console.warn("No API_KEY found for Gemini.");
+  const ai = getClient();
+  if (!ai) {
     return {
       aiStorageTip: "AI key missing.",
       recipeIdea: "AI features unavailable.",
       funFact: "Did you know? This app uses Open Food Facts!"
     };
   }
-
-  const ai = new GoogleGenAI({ apiKey });
 
   const prompt = `
     I have a food product with the following details:
@@ -60,3 +63,38 @@ export const enhanceProductInfo = async (product: ProductData): Promise<GeminiEn
     };
   }
 };
+
+export const generateStorageImage = async (productName: string, storageTip: string): Promise<string | null> => {
+    const ai = getClient();
+    if (!ai) return null;
+
+    const prompt = `A photorealistic, clean, bright educational photo showing exactly how to store ${productName}. 
+    The storage instruction is: "${storageTip}". 
+    Show the food in the correct context (e.g. inside a fridge, on a shelf, in a jar). 
+    Make it look like a high-quality lifestyle stock photo.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [{ text: prompt }]
+            },
+            config: {
+                // Image generation doesn't use responseMimeType/Schema
+            }
+        });
+
+        // Iterate through parts to find the image
+        if (response.candidates?.[0]?.content?.parts) {
+            for (const part of response.candidates[0].content.parts) {
+                if (part.inlineData && part.inlineData.data) {
+                    return `data:image/png;base64,${part.inlineData.data}`;
+                }
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error("Image Gen Error:", error);
+        return null;
+    }
+}
